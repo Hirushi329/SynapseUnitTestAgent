@@ -205,6 +205,7 @@ public class Axis2SynapseEnvironment implements SynapseEnvironment {
         this(cfgCtx, synapseConfig);
         this.contextInformation = contextInformation;
         setSeverDebugMode(contextInformation);
+        setUnitTestingMode(contextInformation);
     }
 
     /**
