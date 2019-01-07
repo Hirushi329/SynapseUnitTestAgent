@@ -64,11 +64,11 @@ import org.apache.synapse.mediators.base.SequenceMediator;
 import org.apache.synapse.rest.RESTRequestHandler;
 import org.apache.synapse.task.SynapseTaskManager;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
+import org.apache.synapse.unittest.Agent;
 import org.apache.synapse.util.concurrent.InboundThreadPool;
 import org.apache.synapse.util.concurrent.SynapseThreadPool;
 import org.apache.synapse.util.xpath.ext.SynapseXpathFunctionContextProvider;
 import org.apache.synapse.util.xpath.ext.SynapseXpathVariableResolver;
-import org.apache.synapse.unitTest.Agent;
 
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
@@ -228,8 +228,13 @@ public class Axis2SynapseEnvironment implements SynapseEnvironment {
      */
 
     public void setUnitTestingMode(ServerContextInformation contextInformation){
-        if (contextInformation.isUnitTestingEnabled()) {
+        SynapseConfiguration syncfg = this.synapseConfig;
+        SynapseEnvironment synEnv = this;
+        if (contextInformation.isUnitTestingModeEnabled()) {
             setUnitTestingEnabled(true);
+        }
+        if (((Axis2SynapseEnvironment) synEnv).isUnitTestingEnabled)
+        {
             Agent agent = new Agent();
             try {
                 agent.initialize();
