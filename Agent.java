@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.SynapseUnitTestAgent;
+package org.apache.synapse.unittest;
 
 import org.apache.log4j.Logger;
 
@@ -23,6 +23,15 @@ import org.apache.log4j.Logger;
  * Class responsible for receiving test data and and maintaining the test execution flow
  */
 public class Agent {
+    private static Agent agent = null;
+
+    public static synchronized Agent getInstance() {
+
+        if (agent == null) {
+            agent = new Agent();
+        }
+        return agent;
+    }
 
     private static Logger log = Logger.getLogger(Agent.class.getName());
     private TCPServer tcpServer = new TCPServer();
@@ -33,9 +42,8 @@ public class Agent {
 
     public void initialize() {
 
-        TCPServer tcpServer = new TCPServer();
-        Agent agent = new Agent();
-        tcpServer.readData(agent);
+        //Agent agent = new Agent();
+        tcpServer.readData(Agent.getInstance());
     }
 
     /**

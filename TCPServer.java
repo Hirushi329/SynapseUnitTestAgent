@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.SynapseUnitTestAgent;
+package org.apache.synapse.unittest;
 
 import org.apache.log4j.Logger;
 

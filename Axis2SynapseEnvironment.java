@@ -227,15 +227,11 @@ public class Axis2SynapseEnvironment implements SynapseEnvironment {
      * when unit testing mode is enabled
      */
 
-    public void setUnitTestingMode(ServerContextInformation contextInformation){
-        SynapseConfiguration syncfg = this.synapseConfig;
-        SynapseEnvironment synEnv = this;
+    public void setUnitTestingMode(ServerContextInformation contextInformation) {
+
         if (contextInformation.isUnitTestingModeEnabled()) {
             setUnitTestingEnabled(true);
-        }
-        if (((Axis2SynapseEnvironment) synEnv).isUnitTestingEnabled)
-        {
-            Agent agent = new Agent();
+            Agent agent = Agent.getInstance();
             try {
                 agent.initialize();
             } catch (Exception e) {
@@ -244,6 +240,7 @@ public class Axis2SynapseEnvironment implements SynapseEnvironment {
 
         }
     }
+
 
     public boolean injectMessage(final MessageContext synCtx) {
         try {
@@ -1175,6 +1172,10 @@ public class Axis2SynapseEnvironment implements SynapseEnvironment {
     public void setDebugEnabled(boolean isDebugEnabled) {
         this.isDebugEnabled = isDebugEnabled;
     }
+
+    /**
+     * set unit testing enabled in the environment
+     */
 
     public void setUnitTestingEnabled(boolean isUnitTestingEnabled) {
         this.isUnitTestingEnabled = isUnitTestingEnabled;
