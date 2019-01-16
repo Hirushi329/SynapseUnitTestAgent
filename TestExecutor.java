@@ -15,9 +15,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.SynapseUnitTestAgent;
+package org.apache.synapse.unittest;
 
+import org.apache.synapse.Mediator;
 import org.apache.synapse.MessageContext;
+import org.apache.synapse.config.SynapseConfiguration;
 import org.apache.synapse.mediators.base.SequenceMediator;
 
 /**
@@ -44,10 +46,12 @@ public class TestExecutor {
     /**
      * Mediate the message through the given sequence
      */
-    public void sequenceMediate(String inputXmlPayload) {
+    public boolean sequenceMediate(String inputXmlPayload, SynapseConfiguration synconfig, String key) {
 
-        SequenceMediator sequenceMediator = new SequenceMediator();
-        sequenceMediator.mediate(createMessageContext(inputXmlPayload));
+        Mediator sequenceMediator = synconfig.getSequence(key);
+        boolean mediationResult = sequenceMediator.mediate(createMessageContext(inputXmlPayload));
+
+        return mediationResult;
     }
 
     /**

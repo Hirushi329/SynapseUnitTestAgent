@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.SynapseUnitTestAgent;
+package org.apache.synapse.unittest;
 
 import org.apache.log4j.Logger;
 
@@ -44,9 +44,7 @@ public class MessageFormatUtils {
 
         String[] parts = message.split(",");
         String subString1 = parts[0];
-        log.info(subString1);
         String subString2 = parts[1];
-        log.info(subString2);
         String[] parts2 = subString1.split("-");
         String operation = parts2[1];
         log.info("get operation" + operation);
@@ -60,19 +58,22 @@ public class MessageFormatUtils {
      * @return decodedArtifact
      */
 
-    public static String getDeploymentData(String message) {
+    public static String[] getDeploymentData(String message) {
 
         String[] parts = message.split(",");
         String subString2 = parts[1];
-        log.info(subString2);
+        String subString3 = parts[2];
         String[] parts3 = subString2.split("-");
+        String[] parts4 = subString3.split("-");
         String encodedArtifact = parts3[1];
-        log.info(encodedArtifact);
-        byte[] decodedBytes = Base64.getDecoder().decode(encodedArtifact);
-        String decodedArtifact = new String(decodedBytes);
+        String encodedFileName = parts4[1];
+        byte[] decodedBytesArtifact = Base64.getDecoder().decode(encodedArtifact);
+        String decodedArtifact = new String(decodedBytesArtifact);
+        byte[] decodedBytesFileName = Base64.getDecoder().decode(encodedFileName);
+        String decodedFileName = new String(decodedBytesFileName);
         log.info("Decoded message:" + decodedArtifact);
 
-        return decodedArtifact;
+        return new String[] {decodedArtifact, decodedFileName} ;
     }
 
     /**
@@ -87,7 +88,6 @@ public class MessageFormatUtils {
         String subString1 = parts[1];
         String subString2 = parts[2];
         String subString3 = parts[3];
-        log.info(subString1);
         String[] parts1 = subString1.split("-");
         String[] parts2 = subString2.split("-");
         String[] parts3 = subString3.split("-");
@@ -95,15 +95,12 @@ public class MessageFormatUtils {
         String encodedExpectedPayload = parts2[1];
         String encodedExpectedPropVal = parts3[1];
 
-        log.info(encodedInputXmlPayload);
         byte[] decodedBytesInputXmlPayload = Base64.getDecoder().decode(encodedInputXmlPayload);
         String decodedInputXmlPayload = new String(decodedBytesInputXmlPayload);
         log.info("Decoded message:" + decodedInputXmlPayload);
-        log.info(encodedExpectedPayload);
         byte[] decodedBytesExpectedpayload = Base64.getDecoder().decode(encodedExpectedPayload);
         String decodedExpectedPayload = new String(decodedBytesExpectedpayload);
         log.info("Decoded message:" + decodedExpectedPayload);
-        log.info(encodedExpectedPropVal);
         byte[] decodedBytesExpectedPropVal = Base64.getDecoder().decode(encodedExpectedPropVal);
         String decodedExpectedPropVal = new String(decodedBytesExpectedPropVal);
         log.info("Decoded message:" + decodedExpectedPropVal);

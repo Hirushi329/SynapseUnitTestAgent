@@ -69,7 +69,7 @@ public class TCPServer {
             String message = bufferedReader.readLine();
             while (message != null) {
                 log.info("Message received:" + message);
-                agent.executeTest(message);
+                agent.processData(message);
                 message = bufferedReader.readLine();
             }
 
@@ -89,6 +89,6 @@ public class TCPServer {
     public void writeData(String result) {
 
         printWriter.println(result);
-        log.info("Result sent");
+        log.info("Result sent:" + result) ;
     }
 }
