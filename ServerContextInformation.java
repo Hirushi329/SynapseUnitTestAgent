@@ -197,7 +197,7 @@ public class ServerContextInformation {
 
     public boolean setUnitTestingModeEnabled() {
 
-        String unitTestValue = System.getProperty("org.apache.synapse.Axis2Environment");
+        String unitTestValue = System.getProperty("org.apache.synapse.ServerContextInformation");
         boolean enabled = Boolean.valueOf(unitTestValue);
        if (enabled){
            this.isUnitTestingModeEnabled = true;

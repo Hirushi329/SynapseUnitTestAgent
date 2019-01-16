@@ -227,16 +227,21 @@ public class Axis2SynapseEnvironment implements SynapseEnvironment {
      * when unit testing mode is enabled
      */
 
-    public void setUnitTestingMode(ServerContextInformation contextInformation) {
+//    public void setUnitTestingMode(ServerContextInformation contextInformation) {
+//
+//        if (contextInformation.isUnitTestingModeEnabled()) {
+//            setUnitTestingEnabled(true);
+//            Agent.getInstance().initialize();
+//
+//        }
+//    }
+
+        public void setUnitTestingMode(ServerContextInformation contextInformation) {
 
         if (contextInformation.isUnitTestingModeEnabled()) {
             setUnitTestingEnabled(true);
-            Agent agent = Agent.getInstance();
-            try {
-                agent.initialize();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            new Initializer().start();
+
 
         }
     }
