@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.synapse.unittest;
+package org.wso2.SynapseUnitTestAgent;
 
 import org.apache.log4j.Logger;
 
@@ -58,22 +58,17 @@ public class MessageFormatUtils {
      * @return decodedArtifact
      */
 
-    public static String[] getDeploymentData(String message) {
+    public static String getDeploymentData(String message) {
 
         String[] parts = message.split(",");
         String subString2 = parts[1];
-        String subString3 = parts[2];
         String[] parts3 = subString2.split("-");
-        String[] parts4 = subString3.split("-");
         String encodedArtifact = parts3[1];
-        String encodedFileName = parts4[1];
-        byte[] decodedBytesArtifact = Base64.getDecoder().decode(encodedArtifact);
-        String decodedArtifact = new String(decodedBytesArtifact);
-        byte[] decodedBytesFileName = Base64.getDecoder().decode(encodedFileName);
-        String decodedFileName = new String(decodedBytesFileName);
+        byte[] decodedBytes = Base64.getDecoder().decode(encodedArtifact);
+        String decodedArtifact = new String(decodedBytes);
         log.info("Decoded message:" + decodedArtifact);
 
-        return new String[] {decodedArtifact, decodedFileName} ;
+        return decodedArtifact;
     }
 
     /**

@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.synapse.unittest;
+package org.wso2.SynapseUnitTestAgent;
 
 import org.apache.log4j.Logger;
 
@@ -69,7 +69,7 @@ public class TCPServer {
             String message = bufferedReader.readLine();
             while (message != null) {
                 log.info("Message received:" + message);
-                agent.processData(message);
+                agent.executeTest(message);
                 message = bufferedReader.readLine();
             }
 
@@ -89,6 +89,6 @@ public class TCPServer {
     public void writeData(String result) {
 
         printWriter.println(result);
-        log.info("Result sent:" + result) ;
+        log.info("Result sent");
     }
 }
