@@ -15,17 +15,40 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.SynapseUnitTestAgent;
+package org.apache.synapse.unittest;
 
+import javafx.util.Pair;
+import org.apache.axiom.om.OMElement;
+import org.apache.axiom.om.util.AXIOMUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.apache.synapse.MessageContext;
+import org.apache.synapse.config.SynapseConfiguration;
+
+import java.io.File;
+import java.net.URL;
+import java.util.Scanner;
+import javax.xml.namespace.QName;
 
 /**
  * Class responsible for receiving test data and and maintaining the test execution flow
  */
-public class Agent {
+public class Agent extends Thread {
+
+    private static Agent agent = null;
+
+    public static synchronized Agent getInstance() {
+
+        if (agent == null) {
+            agent = new Agent();
+        }
+        return agent;
+    }
 
     private static Logger log = Logger.getLogger(Agent.class.getName());
     private TCPServer tcpServer = new TCPServer();
+    private SynapseConfiguration synapseConfiguration = new SynapseConfiguration();
+    private String key = null;
 
     /**
      * Method for initializing the TCPServer instance
@@ -33,9 +56,7 @@ public class Agent {
 
     public void initialize() {
 
-        TCPServer tcpServer = new TCPServer();
-        Agent agent = new Agent();
-        tcpServer.readData(agent);
+        tcpServer.readData(Agent.getInstance());
     }
 
     /**
@@ -44,7 +65,7 @@ public class Agent {
      * @param message
      */
 
-    public void executeTest(String message) {
+    public void processData(String message) {
 
         try {
 
@@ -52,14 +73,19 @@ public class Agent {
                 String operation = MessageFormatUtils.getOperation(message);
 
                 if (operation.equals("deploy")) {
-                    String artifact = MessageFormatUtils.getDeploymentData(message);
-                    String result = new Deployer().deploy(artifact);
+                    String[] deploymentData = MessageFormatUtils.getDeploymentData(message);
+                    String artifact = deploymentData[0];
+                    String fileName = deploymentData[1];
+                    String fileString = FileUtils.readFileToString(new File(artifact));
+                    OMElement xmlFile = AXIOMUtil.stringToOM(fileString);
+                    Pair<SynapseConfiguration, String> pair = new Deployer().deploy(xmlFile, fileName);
+                    synapseConfiguration = pair.getKey();
+                    key = pair.getValue();
 
-                    if (result != null) {
+                    if (key.equals(fileName)) {
                         String deploymentResult = "Sequence is deployed successfully";
                         log.info("Sequence deployed successfully");
-                        String messageToBeSent = MessageFormatUtils.generateResultMessage(deploymentResult);
-                        tcpServer.writeData(messageToBeSent);
+                        tcpServer.writeData(MessageFormatUtils.generateResultMessage(deploymentResult));
 
                     } else
                         log.error("Sequence not deployed");
@@ -71,10 +97,16 @@ public class Agent {
                     String expectedPayload = testDataValues[1];
                     String expectedPropVal = testDataValues[2];
 
-                    new TestExecutor().sequenceMediate(inputXmlPayload);
-                    String unitTestResult = new TestExecutor().doAssertions(expectedPayload, expectedPropVal, inputXmlPayload);
-                    String resultToBeSent = MessageFormatUtils.generateResultMessage(unitTestResult);
-                    tcpServer.writeData(resultToBeSent);
+                    Pair<Boolean, MessageContext> pair = new TestExecutor().sequenceMediate(inputXmlPayload, synapseConfiguration, key);
+                    Boolean mediationResult = pair.getKey();
+                    MessageContext messageContext = pair.getValue();
+                    if (mediationResult) {
+                        String unitTestResult = new TestExecutor().doAssertions(expectedPayload, expectedPropVal, messageContext);
+                        tcpServer.writeData(MessageFormatUtils.generateResultMessage(unitTestResult));
+                    } else {
+                        String mediationError = "Sequence cannot be found";
+                        tcpServer.writeData(MessageFormatUtils.generateResultMessage(mediationError));
+                    }
 
                 } else
                     log.error("Operation not identified");
@@ -82,8 +114,8 @@ public class Agent {
                 log.error("This is not a valid message");
 
         } catch (Exception e) {
-            log.info("Exception in deploying the artifact to the synapse engine");
-            tcpServer.writeData("Exception in deploying the artifact to the synapse engine");
+            String deploymentError = "Exception in mediating the message through the deployed artifact: ";
+            tcpServer.writeData(MessageFormatUtils.generateResultMessage(deploymentError + e));
         }
     }
 }

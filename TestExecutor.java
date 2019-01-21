@@ -15,15 +15,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.SynapseUnitTestAgent;
+package org.apache.synapse.unittest;
 
+import javafx.util.Pair;
+import org.apache.axiom.om.OMElement;
+import org.apache.log4j.Logger;
+import org.apache.synapse.Mediator;
 import org.apache.synapse.MessageContext;
+import org.apache.synapse.config.SynapseConfiguration;
 import org.apache.synapse.mediators.base.SequenceMediator;
 
 /**
  * Class responsible for building message context and mediating the message context through the deployed sequence and asserting the mediation result
  */
 public class TestExecutor {
+
+    static Logger log = Logger.getLogger(TestExecutor.class.getName());
 
     /**
      * Create message context from the inputXmlPayload
@@ -44,22 +51,29 @@ public class TestExecutor {
     /**
      * Mediate the message through the given sequence
      */
-    public void sequenceMediate(String inputXmlPayload) {
+    public Pair<Boolean, MessageContext> sequenceMediate(String inputXmlPayload, SynapseConfiguration synconfig, String key) {
 
-        SequenceMediator sequenceMediator = new SequenceMediator();
-        sequenceMediator.mediate(createMessageContext(inputXmlPayload));
+        Mediator sequenceMediator = synconfig.getSequence(key);
+        MessageContext msgCtxt = createMessageContext(inputXmlPayload);
+        String payload = "---------------------------inputXmlPayload------------------------" + inputXmlPayload;
+        log.info(payload);
+        boolean mediationResult = sequenceMediator.mediate(msgCtxt);
+
+        return new Pair<>(mediationResult, msgCtxt);
     }
 
     /**
      * Asserting the payload and property values
      */
-    public String doAssertions(String expectedPayload, String expectedPropVal, String inputXmlPayload) {
+    public String doAssertions(String expectedPayload, String expectedPropVal, MessageContext msgCtxt) {
 
-        MessageContext msgCtxt = createMessageContext(inputXmlPayload);
+        String propVal = msgCtxt.getEnvelope().toString();
+        boolean result1 = (expectedPropVal.equals(propVal));
+        log.info(result1);
 
-        boolean result1 = (expectedPropVal.equals(msgCtxt.getEnvelope().toString()));
-
-        boolean result2 = (expectedPayload.equals(msgCtxt.getEnvelope().getBody().toString()));
+        String payload = msgCtxt.getEnvelope().getBody().toString();
+        boolean result2 = (expectedPayload.equals(payload));
+        log.info(result2);
 
         if (result1 && result2) {
             return "Unit Testing is Successful";

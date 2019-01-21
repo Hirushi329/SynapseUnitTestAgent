@@ -15,18 +15,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.SynapseUnitTestAgent;
+package org.apache.synapse.unittest;
 
+import javafx.util.Pair;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
 import org.apache.axis2.context.ConfigurationContext;
+import org.apache.axis2.deployment.repository.util.DeploymentFileData;
 import org.apache.axis2.description.Parameter;
 import org.apache.axis2.engine.AxisConfiguration;
+import org.apache.log4j.Logger;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.config.SynapseConfiguration;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.core.axis2.Axis2SynapseEnvironment;
+import org.apache.synapse.deployers.AbstractSynapseArtifactDeployer;
 import org.apache.synapse.deployers.SequenceDeployer;
+
+import java.io.File;
+import java.util.Scanner;
 
 /**
  * Util class for deploying synapse artifacts to the synapse engine
@@ -34,20 +41,24 @@ import org.apache.synapse.deployers.SequenceDeployer;
 
 public class Deployer {
 
-    public String deploy(String artifactIdString) throws Exception {
+    private static Logger log = Logger.getLogger(Deployer.class.getName());
 
-        OMElement inputElement = AXIOMUtil.stringToOM(artifactIdString);
+    public Pair<SynapseConfiguration, String> deploy(OMElement inputElement, String fileName) throws Exception {
+
         SequenceDeployer sequenceDeployer = new SequenceDeployer();
 
         SynapseConfiguration synapseConfiguration = new SynapseConfiguration();
         AxisConfiguration axisConfiguration = synapseConfiguration.getAxisConfiguration();
         ConfigurationContext cfgCtx = new ConfigurationContext(axisConfiguration);
         SynapseEnvironment synapseEnvironment = new Axis2SynapseEnvironment(cfgCtx, synapseConfiguration);
+
         axisConfiguration.addParameter(new Parameter(SynapseConstants.SYNAPSE_ENV, synapseEnvironment));
         axisConfiguration.addParameter(new Parameter(SynapseConstants.SYNAPSE_CONFIG, synapseConfiguration));
         cfgCtx.setAxisConfiguration(axisConfiguration);
 
         sequenceDeployer.init(cfgCtx);
-        return sequenceDeployer.deploySynapseArtifact(inputElement, "MySequence", null);
+        String deployedArtifact = sequenceDeployer.deploySynapseArtifact(inputElement, fileName, null);
+
+        return new Pair<>(synapseConfiguration, deployedArtifact);
     }
 }
