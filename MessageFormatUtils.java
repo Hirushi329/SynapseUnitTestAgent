@@ -44,7 +44,6 @@ public class MessageFormatUtils {
 
         String[] parts = message.split(",");
         String subString1 = parts[0];
-        String subString2 = parts[1];
         String[] parts2 = subString1.split("-");
         String operation = parts2[1];
         log.info("get operation" + operation);
@@ -61,19 +60,23 @@ public class MessageFormatUtils {
     public static String[] getDeploymentData(String message) {
 
         String[] parts = message.split(",");
-        String subString2 = parts[1];
-        String subString3 = parts[2];
-        String[] parts3 = subString2.split("-");
-        String[] parts4 = subString3.split("-");
-        String encodedArtifact = parts3[1];
-        String encodedFileName = parts4[1];
+        String subString1 = parts[1];
+        String subString2 = parts[2];
+        String subString3 = parts[3];
+        String[] parts1 = subString1.split("-");
+        String[] parts2 = subString2.split("-");
+        String[] parts3 = subString3.split("-");
+        String encodedArtifact = parts1[1];
+        String encodedFileName = parts2[1];
+        String encodedArtifactType = parts3[1];
         byte[] decodedBytesArtifact = Base64.getDecoder().decode(encodedArtifact);
         String decodedArtifact = new String(decodedBytesArtifact);
         byte[] decodedBytesFileName = Base64.getDecoder().decode(encodedFileName);
         String decodedFileName = new String(decodedBytesFileName);
-        log.info("Decoded message:" + decodedArtifact);
+        byte[] decodedBytesArtifactType = Base64.getDecoder().decode(encodedArtifactType);
+        String decodedArtifactType = new String(decodedBytesArtifactType);
 
-        return new String[]{decodedArtifact, decodedFileName};
+        return new String[]{decodedArtifact, decodedFileName, decodedArtifactType};
     }
 
     /**

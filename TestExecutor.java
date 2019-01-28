@@ -18,19 +18,23 @@
 package org.apache.synapse.unittest;
 
 import javafx.util.Pair;
-import org.apache.axiom.om.OMElement;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HTTP;
 import org.apache.log4j.Logger;
 import org.apache.synapse.Mediator;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.config.SynapseConfiguration;
-import org.apache.synapse.mediators.base.SequenceMediator;
 
 /**
  * Class responsible for building message context and mediating the message context through the deployed sequence and asserting the mediation result
  */
 public class TestExecutor {
 
-    static Logger log = Logger.getLogger(TestExecutor.class.getName());
+    private static Logger log = Logger.getLogger(TestExecutor.class.getName());
 
     /**
      * Create message context from the inputXmlPayload
@@ -55,24 +59,53 @@ public class TestExecutor {
 
         Mediator sequenceMediator = synconfig.getSequence(key);
         MessageContext msgCtxt = createMessageContext(inputXmlPayload);
-        String payload = "---------------------------inputXmlPayload------------------------" + inputXmlPayload;
-        log.info(payload);
         boolean mediationResult = sequenceMediator.mediate(msgCtxt);
 
         return new Pair<>(mediationResult, msgCtxt);
     }
 
     /**
+     * Mediate the message through the proxy service
+     * @param key
+     * @param xmlFragment
+     * @param synapseConfiguration
+     * @return
+     */
+
+    public String invokeProxyService(String key, String xmlFragment, SynapseConfiguration synapseConfiguration) {
+
+        try {
+
+            StringBuilder stringBuilder;
+            stringBuilder = new StringBuilder("http://10.100.4.213:8280/services/");
+            String url = stringBuilder.append(key).toString();
+            HttpClient client = new DefaultHttpClient();
+            HttpPost httpPost = new HttpPost(url);
+            httpPost.setHeader(HTTP.CONTENT_TYPE, "application/xml");
+            httpPost.setHeader(HTTP.CONTENT_TYPE, "text/xml");
+            httpPost.setHeader("Action", "urn-mediate");
+            StringEntity se = new StringEntity(xmlFragment);
+            HttpResponse response = client.execute(httpPost);
+            log.info("------------------------response------------------" +response);
+            log.info("-------------------------entity-------------------" + response.getEntity().toString());
+            return response.toString();
+            }
+
+            catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+    /**
      * Asserting the payload and property values
      */
     public String doAssertions(String expectedPayload, String expectedPropVal, MessageContext msgCtxt) {
 
-        String propVal = msgCtxt.getEnvelope().toString();
-        boolean result1 = (expectedPropVal.equals(propVal));
+        boolean result1 = (expectedPropVal.equals(msgCtxt.getEnvelope().toString()));
         log.info(result1);
 
-        String payload = msgCtxt.getEnvelope().getBody().toString();
-        boolean result2 = (expectedPayload.equals(payload));
+        boolean result2 = (expectedPayload.equals(msgCtxt.getEnvelope().getBody().toString()));
         log.info(result2);
 
         if (result1 && result2) {
@@ -81,5 +114,14 @@ public class TestExecutor {
             return "Unit testing failed";
         }
 
+    }
+
+    public String assertProperties(String expectedPropVal, String propertySet) {
+
+        if (propertySet.equals(expectedPropVal)) {
+            return "Unit Testing is Successful";
+        } else {
+            return "Unit testing failed";
+        }
     }
 }

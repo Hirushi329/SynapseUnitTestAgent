@@ -24,11 +24,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.config.SynapseConfiguration;
+import org.apache.synapse.deployers.SynapseArtifactDeploymentStore;
 
 import java.io.File;
-import java.net.URL;
-import java.util.Scanner;
-import javax.xml.namespace.QName;
 
 /**
  * Class responsible for receiving test data and and maintaining the test execution flow
@@ -36,6 +34,7 @@ import javax.xml.namespace.QName;
 public class Agent extends Thread {
 
     private static Agent agent = null;
+    public String artifactType = null;
 
     public static synchronized Agent getInstance() {
 
@@ -76,43 +75,86 @@ public class Agent extends Thread {
                     String[] deploymentData = MessageFormatUtils.getDeploymentData(message);
                     String artifact = deploymentData[0];
                     String fileName = deploymentData[1];
+                    String artifactType = deploymentData[2];
+                    this.artifactType = artifactType;
                     String fileString = FileUtils.readFileToString(new File(artifact));
                     OMElement xmlFile = AXIOMUtil.stringToOM(fileString);
-                    Pair<SynapseConfiguration, String> pair = new Deployer().deploy(xmlFile, fileName);
-                    synapseConfiguration = pair.getKey();
-                    key = pair.getValue();
+
+                    if (artifactType.equals("sequence")) {
+                        Pair<SynapseConfiguration, String> pair = new Deployer().deploySequence(xmlFile, fileName);
+                        synapseConfiguration = pair.getKey();
+                        key = pair.getValue();
+
+                    } else if (artifactType.equals("proxy")) {
+                        Pair<SynapseConfiguration, String> pair = new Deployer().deployProxy(xmlFile, fileName);
+                        synapseConfiguration = pair.getKey();
+                        key = pair.getValue();
+                        log.info(key);
+
+                    } else {
+                        String error = "Operation not identified";
+                        log.error(error);
+                        tcpServer.writeData(MessageFormatUtils.generateResultMessage(error));
+                    }
 
                     if (key.equals(fileName)) {
-                        String deploymentResult = "Sequence is deployed successfully";
-                        log.info("Sequence deployed successfully");
+                        String deploymentResult = "Artifact is deployed successfully";
+                        log.info("Artifact deployed successfully");
                         tcpServer.writeData(MessageFormatUtils.generateResultMessage(deploymentResult));
 
-                    } else
-                        log.error("Sequence not deployed");
+                    } else {
+                        String error = "Artifact not deployed";
+                        log.error(error);
+                        tcpServer.writeData(error);
+
+                    }
 
                 } else if (operation.equals("executeTest")) {
+
                     log.info("Test data received unit testing begins");
                     String[] testDataValues = MessageFormatUtils.getTestData(message);
                     String inputXmlPayload = testDataValues[0];
                     String expectedPayload = testDataValues[1];
                     String expectedPropVal = testDataValues[2];
 
-                    Pair<Boolean, MessageContext> pair = new TestExecutor().sequenceMediate(inputXmlPayload, synapseConfiguration, key);
-                    Boolean mediationResult = pair.getKey();
-                    MessageContext messageContext = pair.getValue();
-                    if (mediationResult) {
-                        String unitTestResult = new TestExecutor().doAssertions(expectedPayload, expectedPropVal, messageContext);
-                        tcpServer.writeData(MessageFormatUtils.generateResultMessage(unitTestResult));
-                    } else {
-                        String mediationError = "Sequence cannot be found";
-                        tcpServer.writeData(MessageFormatUtils.generateResultMessage(mediationError));
+                    if (artifactType.equals("sequence")) {
+                        Pair<Boolean, MessageContext> pair = new TestExecutor().sequenceMediate(inputXmlPayload, synapseConfiguration, key);
+                        Boolean mediationResult = pair.getKey();
+                        MessageContext messageContext = pair.getValue();
+                        if (mediationResult) {
+                            String unitTestResult = new TestExecutor().doAssertions(expectedPayload, expectedPropVal, messageContext);
+                            tcpServer.writeData(MessageFormatUtils.generateResultMessage(unitTestResult));
+                            new SynapseArtifactDeploymentStore().removeArtifactWithFileName(key);
+                        } else {
+                            String mediationError = "Sequence cannot be found";
+                            log.error(mediationError);
+                            tcpServer.writeData(MessageFormatUtils.generateResultMessage(mediationError));
+                        }
+                    } else if (artifactType.equals("proxy")) {
+                        String propertySet = new TestExecutor().invokeProxyService(key, inputXmlPayload, synapseConfiguration);
+
+                        if (propertySet.equals("Exception in invoking the proxy service")) {
+                            String result = "Exception in invoking the proxy service";
+                            tcpServer.writeData(MessageFormatUtils.generateResultMessage(result));
+                        } else {
+                            String assertionResult = new TestExecutor().assertProperties(expectedPropVal, propertySet);
+                            tcpServer.writeData(MessageFormatUtils.generateResultMessage(assertionResult));
+
+                        }
+
                     }
+                } else {
+                    String error = "Operation not identified";
+                    log.error(error);
+                    tcpServer.writeData(MessageFormatUtils.generateResultMessage(error));
+                }
 
-                } else
-                    log.error("Operation not identified");
-            } else
-                log.error("This is not a valid message");
+            } else {
+                String error = "This is not a valid message";
+                log.error(error);
+                tcpServer.writeData(MessageFormatUtils.generateResultMessage(error));
 
+            }
         } catch (Exception e) {
             String deploymentError = "Exception in mediating the message through the deployed artifact: ";
             tcpServer.writeData(MessageFormatUtils.generateResultMessage(deploymentError + e));
