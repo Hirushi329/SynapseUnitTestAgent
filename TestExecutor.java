@@ -86,9 +86,7 @@ public class TestExecutor {
             httpPost.setHeader("Action", "urn-mediate");
             StringEntity se = new StringEntity(xmlFragment);
             HttpResponse response = client.execute(httpPost);
-            log.info("------------------------response------------------" +response);
-            log.info("-------------------------entity-------------------" + response.getEntity().toString());
-            return response.toString();
+            return response.getEntity().toString();
             }
 
             catch (Exception e) {
