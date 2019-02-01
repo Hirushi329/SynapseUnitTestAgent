@@ -84,6 +84,8 @@ public class Agent extends Thread {
                         Pair<SynapseConfiguration, String> pair = new Deployer().deploySequence(xmlFile, fileName);
                         synapseConfiguration = pair.getKey();
                         key = pair.getValue();
+                        log.info(key);
+                        log.info(fileName);
 
                     } else if (artifactType.equals("proxy")) {
                         Pair<SynapseConfiguration, String> pair = new Deployer().deployProxy(xmlFile, fileName);
@@ -131,7 +133,7 @@ public class Agent extends Thread {
                             tcpServer.writeData(MessageFormatUtils.generateResultMessage(mediationError));
                         }
                     } else if (artifactType.equals("proxy")) {
-                        String propertySet = new TestExecutor().invokeProxyService(key, inputXmlPayload, synapseConfiguration);
+                        String propertySet = new TestExecutor().invokeProxyService(key, inputXmlPayload);
 
                         if (propertySet.equals("Exception in invoking the proxy service")) {
                             String result = "Exception in invoking the proxy service";

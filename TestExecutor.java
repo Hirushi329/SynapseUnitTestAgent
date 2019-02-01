@@ -47,7 +47,7 @@ public class TestExecutor {
             msgCtxt = TestUtils.createLightweightSynapseMessageContext(inputXmlPayload);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Exception in creating message context", e);
         }
         return msgCtxt;
     }
@@ -68,11 +68,10 @@ public class TestExecutor {
      * Mediate the message through the proxy service
      * @param key
      * @param xmlFragment
-     * @param synapseConfiguration
      * @return
      */
 
-    public String invokeProxyService(String key, String xmlFragment, SynapseConfiguration synapseConfiguration) {
+    public String invokeProxyService(String key, String xmlFragment) {
 
         try {
 
@@ -85,12 +84,13 @@ public class TestExecutor {
             httpPost.setHeader(HTTP.CONTENT_TYPE, "text/xml");
             httpPost.setHeader("Action", "urn-mediate");
             StringEntity se = new StringEntity(xmlFragment);
+            httpPost.setEntity(se);
             HttpResponse response = client.execute(httpPost);
             return response.getEntity().toString();
             }
 
             catch (Exception e) {
-                e.printStackTrace();
+                log.error("Exception in invoking the proxy service", e);
                 return null;
             }
         }
